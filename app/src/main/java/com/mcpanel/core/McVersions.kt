@@ -71,6 +71,13 @@ object McVersions {
         else actual >= required || (required == 17 && actual == 21) || (required == 17 && actual == 25)
     }
 
+    /** randomTickSpeed gamerule was added in 1.8; 1.7.10 and older do not know it. */
+    fun supportsRandomTickSpeed(version: String): Boolean {
+        val m = Regex("^1\\.(\\d{1,2})").find(version.trim()) ?: return true
+        val minor = m.groupValues[1].toIntOrNull() ?: return true
+        return minor >= 8
+    }
+
     fun javaLabel(major: Int): String = "Java $major"
 
     /** Reasonable default RAM for a version. */

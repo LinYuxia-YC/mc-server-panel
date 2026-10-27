@@ -429,11 +429,16 @@ class ServerActivity : AppCompatActivity() {
         FilePicker.pickJar(this, profile.dir) { picked ->
             val progress = Ui.progress(this, "正在导入服务端核心", cancelable = false)
             lifecycleScope.launch {
+                val info = withContext(Dispatchers.IO) { CoreDetector.inspect(picked) }
+                if (!info.validJar) {
+                    progress.dismiss()
+                    Ui.toast(this@ServerActivity, "不是有效的 jar 文件")
+                    return@launch
+                }
                 val dest = File(profile.dir, "server.jar")
                 val ok = withContext(Dispatchers.IO) {
                     if (picked.absolutePath == dest.absolutePath) true else FileUtils.copy(picked, dest, true)
                 }
-                val info = withContext(Dispatchers.IO) { CoreDetector.inspect(dest) }
                 progress.dismiss()
                 if (!ok) {
                     Ui.toast(this@ServerActivity, "复制失败")
@@ -444,7 +449,20 @@ class ServerActivity : AppCompatActivity() {
                 if (!info.version.isNullOrBlank()) profile.mcVersion = info.version
                 Prefs.upsert(profile)
                 updateStaticInfo()
-                Ui.toast(this@ServerActivity, "已导入 ${info.type.label} ${info.version ?: ""}")
+                val missing = info.classPath.filter { !File(profile.dir, it).exists() }
+                if (missing.isNotEmpty()) {
+                    MaterialAlertDialogBuilder(this@ServerActivity)
+                        .setTitle("这是启动器核心，缺少依赖文件")
+                        .setMessage(
+                            "该核心通过 MANIFEST Class-Path 加载真正的服务端：\n\n" +
+                                missing.joinToString("\n") +
+                                "\n\n请把原服务器目录中的 bin/、libraries/、asm/ 一起放到服务器目录，否则启动会失败。"
+                        )
+                        .setPositiveButton("知道了", null)
+                        .show()
+                } else {
+                    Ui.toast(this@ServerActivity, "已导入 ${info.type.label} ${info.version ?: ""}")
+                }
             }
         }
     }

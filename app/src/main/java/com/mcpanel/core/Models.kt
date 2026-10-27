@@ -69,7 +69,7 @@ enum class CoreType(val label: String) {
     QUILT("Quilt"),
     FORGE("Forge"),
     NEOFORGE("NeoForge"),
-    CAULDRON("Cauldron/Thermos"),
+    CAULDRON("Cauldron"),
     OTHER("未知核心")
 }
 
@@ -78,7 +78,11 @@ data class CoreInfo(
     val version: String?,
     val isClient: Boolean,
     val mainClass: String? = null,
-    val sizeBytes: Long = 0L
+    val sizeBytes: Long = 0L,
+    /** false when the selected file is not a readable jar/zip at all. */
+    val validJar: Boolean = true,
+    /** Manifest Class-Path entries (KCauldron / Forge wrapper jars rely on these). */
+    val classPath: List<String> = emptyList()
 )
 
 data class LogLine(val time: Long, val text: String)

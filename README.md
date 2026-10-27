@@ -11,9 +11,9 @@
 > 仓库：<https://github.com/LinYuxia-YC/mc-server-panel>
 
 > 已在 OPPO PFVM10（Android 12，arm64）真机验证：
-> 原版 1.12.2 + Java 8（Temurin 8u504）与 原版 1.20.1 + Java 17（Temurin 17.0.20.1）均可正常启动、监听端口、在控制台收发指令。
-> 直接安装包：[mcpanel-v1.0.0-arm64.apk](https://github.com/LinYuxia-YC/mc-server-panel/releases/download/v1.0.0/mcpanel-v1.0.0-arm64.apk)（约 5.9 MB，见 [Releases](https://github.com/LinYuxia-YC/mc-server-panel/releases)）。
-> 国内网络下载慢时可用加速地址：`https://ghfast.top/https://github.com/LinYuxia-YC/mc-server-panel/releases/download/v1.0.0/mcpanel-v1.0.0-arm64.apk`
+> 原版 1.12.2 + Java 8、原版 1.20.1 + Java 17、KCauldron 1.7.10（367 B 启动器核心）+ Java 8 均可正常启动、监听端口、在控制台收发指令。
+> 直接安装包：[mcpanel-v1.0.1-arm64.apk](https://github.com/LinYuxia-YC/mc-server-panel/releases/download/v1.0.1/mcpanel-v1.0.1-arm64.apk)（约 5.9 MB，见 [Releases](https://github.com/LinYuxia-YC/mc-server-panel/releases)）。
+> 国内网络下载慢时可用加速地址：`https://ghfast.top/https://github.com/LinYuxia-YC/mc-server-panel/releases/download/v1.0.1/mcpanel-v1.0.1-arm64.apk`
 
 ## 界面预览
 
@@ -29,12 +29,17 @@
 | --- | --- |
 | ![Java 环境](docs/screenshot-java.png) | ![世界管理](docs/screenshot-world.png) |
 
+| KCauldron 启动器核心识别 | KCauldron 控制台日志镜像 |
+| --- | --- |
+| ![KCauldron](docs/screenshot-kcauldron.png) | ![KCauldron Console](docs/screenshot-kcauldron-console.png) |
+
 ## 真机验证记录
 
 | 项目 | 结果 |
 | --- | --- |
 | 原版 1.12.2（Java 8 / Temurin 8u504 / proot） | ✅ `Done (24.026s)`，25565 监听，控制台 `list` 正常返回 |
 | 原版 1.20.1（Java 17 / Temurin 17.0.20.1 / proot） | ✅ `Done (86.009s)`，25566 监听，控制台输出正常 |
+| KCauldron 1.7.10（367 B 启动器核心 / Java 8 / proot） | ✅ 导入识别 1.7.10，`Done (7.362s)`，25565 监听，控制台自动镜像 `latest.log`，`list` 返回 0/20 |
 | 三种 Java 方式 | ✅ 国内镜像下载安装、已安装运行时选择、更换 Java 均通过 |
 | 配置 | ✅ 端口 25565→25566、随机刻 3→5（启动后自动 `gamerule`）、MOTD 中文、正版验证开关写回 `server.properties` |
 | MOD 管理 | ✅ 开关重命名 `.jar` ⇄ `.jar.disabled`，标签页切换 |
@@ -51,7 +56,7 @@
 | 需求 | 实现 |
 | --- | --- |
 | 自定义服务器目录 / 添加服务器目录 | 新建服务器时选择或新建任意目录；也可在「设置 → 默认服务器根目录」修改默认位置；主界面支持导入已有服务器目录 |
-| 导入服务器核心 | 内置文件选择器选择任意 `.jar`，自动识别 Paper / Purpur / Spigot / CraftBukkit / 原版 / Forge / NeoForge / Fabric / Quilt / Cauldron 与 MC 版本 |
+| 导入服务器核心 | 内置文件选择器选择任意 `.jar`（包括 KCauldron / Thermos / Forge 1.7.10 那种 367 B 的启动器核心），自动识别 Paper / Purpur / Spigot / CraftBukkit / 原版 / Forge / NeoForge / Fabric / Quilt / Cauldron，解析 MANIFEST `Class-Path` 推断版本 |
 | 导入核心后选择 MC 版本 → 三种 Java 方式 | ① 中国大陆镜像源（清华 TUNA）② 官方源（Adoptium / Ubuntu CDN）③ 选择本机已配置好的 Java。选择后自动下载、解压、校验并绑定到该服务器 |
 | 快捷打开 EULA、用 MT 管理器打开目录 | 「用户协议」可查看/同意 EULA 并直接编辑 `eula.txt`；「打开目录」通过 `resource/folder` Intent 直接唤起 MT 管理器定位到服务器目录 |
 | 快速编辑 MOD | MOD / 插件双列表，开关即重命名（`.jar` ⇄ `.jar.disabled`），支持导入、删除、跳转 MT（兼容 `.dsible` 等旧后缀） |
@@ -213,6 +218,24 @@ app/src/main/assets/proot/
 
 ---
 
+## 更新日志
+
+### v1.0.1
+
+- 修复：不再拒绝体积很小的启动器核心（KCauldron / Thermos / Forge 1.7.10 的 wrapper 只有 367 B）
+- 新增：解析 MANIFEST `Class-Path`，从 `bin/pw/prok/KCauldron/1.7.10-1614.201/...` 自动识别 MC 1.7.10；缺少 `bin/`、`libraries/`、`asm/` 时会明确提示
+- 新增：KCauldron / Forge 把日志写进 `logs/latest.log`、不写 stdout 时，控制台自动镜像日志文件；启动前轮转 `latest.log`，避免上一轮的 `Done` 被误判为本次启动完成
+- 修复：1.7.10 不再发送不存在的 `gamerule randomTickSpeed`，改为在面板提示跳过
+- 修复：导入已有服务器目录时保留原 `server.properties` 中的端口、难度、MOTD、最大玩家数等配置
+- 修复：Ubuntu rootfs 的 `/etc/resolv.conf` 是符号链接，导致 DNS 配置写入失败
+- 版本号：`versionCode 2` / `versionName 1.0.1`
+
+### v1.0.0
+
+- 首个公开版本：核心导入、按版本安装 Java 8/17/21/25、配置/MOD/世界/EULA/MT 联动、一键开服与日志导出
+
+---
+
 ## 已知限制
 
 - 仅支持 **arm64-v8a** 设备（32 位 ARM / x86 模拟器不在支持范围）。
@@ -220,6 +243,7 @@ app/src/main/assets/proot/
 - 服务器运行在 proot 中，CPU 密集场景有少量额外开销；首次生成世界会比桌面端慢。
 - 正版验证需要设备能访问 Mojang 会话服务器；国内网络下建议保持离线模式。
 - 仅管理 Java 版服务端，不涉及基岩版。
+- 1.7.10 没有 `randomTickSpeed` gamerule，面板会跳过随机刻设置；KCauldron / Forge 1.7.10 的启动器核心依赖同目录的 `bin/`、`libraries/`、`asm/`，请把原服务端目录完整拷贝后再导入核心。
 
 ---
 

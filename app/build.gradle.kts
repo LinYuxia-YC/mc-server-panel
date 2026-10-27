@@ -11,8 +11,8 @@ android {
         applicationId = "com.mcpanel.server"
         minSdk = 24
         targetSdk = 28
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
         resourceConfigurations += listOf("zh", "en")
     }
 

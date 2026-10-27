@@ -164,6 +164,11 @@ class SetupActivity : AppCompatActivity() {
     }
 
     private fun restoreState() {
+        // Importing an existing directory should keep its server.properties values.
+        if (profile.propertiesFile.exists()) {
+            ServerOps.readFromProperties(profile)
+            Prefs.upsert(profile)
+        }
         if (profile.jar.isNotBlank() && profile.jarFile.exists()) {
             coreFile = profile.jarFile
             coreInfo = CoreDetector.inspect(profile.jarFile)
@@ -201,16 +206,28 @@ class SetupActivity : AppCompatActivity() {
 
     private fun describeCore(file: File, info: CoreInfo): String {
         val versionText = info.version ?: profile.mcVersion.ifBlank { "版本未识别" }
-        return "已导入：${info.type.label} · $versionText\n${file.name} · ${FileUtils.humanSize(file.length())}"
+        val builder = StringBuilder()
+        builder.append("已导入：").append(info.type.label).append(" · ").append(versionText)
+        if (info.classPath.isNotEmpty()) builder.append("（启动器核心）")
+        builder.append("\n").append(file.name).append(" · ").append(FileUtils.humanSize(file.length()))
+        val missing = missingDependencies(info)
+        if (missing.isNotEmpty()) {
+            builder.append("\n⚠ 缺少依赖：").append(missing.joinToString("、"))
+        }
+        return builder.toString()
     }
 
     private fun pickCore() {
         FilePicker.pickJar(this, profile.dir) { picked ->
-            if (picked.length() < 2048) {
-                Ui.toast(this, "文件太小，不像是服务端核心")
+            val info = CoreDetector.inspect(picked)
+            if (!info.validJar) {
+                Ui.confirm(
+                    this,
+                    "不是有效的 jar 文件",
+                    "无法读取 ${picked.name} 的 zip 结构，请确认这是一个完整的 .jar 文件。"
+                ) { }
                 return@pickJar
             }
-            val info = CoreDetector.inspect(picked)
             if (info.isClient) {
                 Ui.confirm(this, "这是客户端核心", "检测到这是 Minecraft 客户端 jar，无法用于开服。是否仍要导入？") {
                     copyCore(picked, info)
@@ -244,10 +261,25 @@ class SetupActivity : AppCompatActivity() {
             }
             Prefs.upsert(profile)
             updateAll()
+            val missing = missingDependencies(info)
+            if (missing.isNotEmpty()) {
+                Ui.confirm(
+                    this@SetupActivity,
+                    "这是启动器核心，缺少依赖文件",
+                    "该核心的 MANIFEST 通过 Class-Path 加载真正的服务端：\n\n" +
+                        missing.joinToString("\n") +
+                        "\n\n请把原服务器目录中的 bin/、libraries/、asm/ 等依赖一起放到服务器目录，否则启动会失败。\n\n可先用 MT 管理器把原服务器整个目录复制过来，再导入核心。"
+                ) { }
+            }
             if (info.version == null) {
                 Ui.toast(this@SetupActivity, "未能自动识别版本，请手动选择")
             }
         }
+    }
+
+    private fun missingDependencies(info: CoreInfo): List<String> {
+        if (info.classPath.isEmpty()) return emptyList()
+        return info.classPath.filter { !File(profile.dir, it).exists() }
     }
 
     private fun onVersionSelected(value: String) {
@@ -364,8 +396,14 @@ class SetupActivity : AppCompatActivity() {
         val hasCore = coreFile?.exists() == true
         cardVersion.alpha = if (hasCore || version.isNotBlank()) 1f else 0.45f
         if (hasCore) {
-            coreDetected.text = describeCore(coreFile!!, coreInfo ?: CoreDetector.inspect(coreFile!!))
-            coreDetected.setTextColor(ContextCompat.getColor(this, R.color.success))
+            val info = coreInfo ?: CoreDetector.inspect(coreFile!!)
+            coreDetected.text = describeCore(coreFile!!, info)
+            coreDetected.setTextColor(
+                ContextCompat.getColor(
+                    this,
+                    if (missingDependencies(info).isEmpty()) R.color.success else R.color.warning
+                )
+            )
         } else if (profile.jar.isNotBlank() && profile.jarFile.exists()) {
             coreDetected.text = "服务器核心：${profile.jar}"
         } else {
@@ -501,7 +539,7 @@ class SetupActivity : AppCompatActivity() {
         profile.ramMb = ramSlider.value.toInt()
         profile.port = port
         profile.onlineMode = onlineSwitch.isChecked
-        profile.motd = profile.displayTitle
+        if (profile.motd.isBlank()) profile.motd = profile.displayTitle
         profile.eula = true
         profile.lastStart = 0L
         ServerOps.prepareDirectory(profile)

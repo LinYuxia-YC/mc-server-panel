@@ -104,16 +104,19 @@ object Proot {
             if (!dns.contains("223.5.5.5")) sb.append("nameserver 223.5.5.5\n")
             val etc = File(Paths.rootfs, "etc")
             FileUtils.ensureDir(etc)
-            // Ubuntu image ships /etc/resolv.conf as a symlink to systemd-resolved; replace it.
+            // Ubuntu base ships /etc/resolv.conf as a symlink to systemd-resolved (missing
+            // target inside the container). Delete the link itself before writing a real file.
             val resolv = File(etc, "resolv.conf")
-            if (resolv.exists() && resolv.isFile) {
-                resolv.writeText(sb.toString())
-            } else {
-                if (resolv.exists()) resolv.delete()
-                resolv.writeText(sb.toString())
+            try {
+                // unlink works on the symlink itself even when its target is missing
+                resolv.delete()
+            } catch (_: Throwable) {
             }
+            resolv.writeText(sb.toString())
+            resolv.setReadable(true, false)
             val hosts = File(etc, "hosts")
             hosts.writeText("127.0.0.1 localhost\n127.0.1.1 mcserver\n::1 localhost ip6-localhost ip6-loopback\n")
+            hosts.setReadable(true, false)
         } catch (_: Throwable) {
         }
     }

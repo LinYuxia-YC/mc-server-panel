@@ -41,15 +41,22 @@ object CoreDetector {
                 }
             }
         } catch (_: Throwable) {
-            return CoreInfo(CoreType.OTHER, null, false, null, file.length())
+            return CoreInfo(CoreType.OTHER, null, false, null, file.length(), validJar = false)
         }
 
+        // Manifest Class-Path may span multiple lines with a leading space.
+        val unfoldedManifest = manifest.replace("\r\n ", "").replace("\n ", "")
         val mainClass = Regex("(?m)^Main-Class:\\s*(.+)$")
-            .find(manifest)?.groupValues?.get(1)?.trim()
+            .find(unfoldedManifest)?.groupValues?.get(1)?.trim()
         val implVersion = Regex("(?m)^Implementation-Version:\\s*(.+)$")
-            .find(manifest)?.groupValues?.get(1)?.trim()
+            .find(unfoldedManifest)?.groupValues?.get(1)?.trim()
         val specVersion = Regex("(?m)^Specification-Version:\\s*(.+)$")
-            .find(manifest)?.groupValues?.get(1)?.trim()
+            .find(unfoldedManifest)?.groupValues?.get(1)?.trim()
+        val classPathLine = Regex("(?m)^Class-Path:\\s*(.+)$")
+            .find(unfoldedManifest)?.groupValues?.get(1)?.trim().orEmpty()
+        val classPathEntries = classPathLine.split(Regex("\\s+"))
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
 
         if (lowerName.contains("purpur")) typeFromName = CoreType.PURPUR
         else if (lowerName.contains("paper")) typeFromName = CoreType.PAPER
@@ -80,6 +87,13 @@ object CoreDetector {
             entries.any { it.startsWith("cpw/mods/bootstraplauncher/") } ->
                 if (lowerName.contains("neoforge")) CoreType.NEOFORGE else CoreType.FORGE
             entries.any { it.startsWith("net/minecraftforge/") } -> CoreType.FORGE
+            // Small wrapper jars (KCauldron / Thermos / Forge 1.7.10) only contain a manifest:
+            // Main-Class: cpw.mods.fml.relauncher.ServerLaunchWrapper
+            // Class-Path: bin/pw/prok/KCauldron/1.7.10-1614.201/KCauldron-1.7.10-1614.201.jar
+            mainClass != null && mainClass.contains("ServerLaunchWrapper") ->
+                if (lowerName.contains("cauldron") || lowerName.contains("thermos")) CoreType.CAULDRON else CoreType.FORGE
+            mainClass != null && mainClass.startsWith("cpw.mods.fml") ->
+                if (lowerName.contains("cauldron") || lowerName.contains("thermos")) CoreType.CAULDRON else CoreType.FORGE
             entries.any { it == "org/bukkit/craftbukkit/Main.class" } ->
                 if (lowerName.contains("spigot") || entries.any { e -> e.startsWith("org/spigotmc/") }) CoreType.SPIGOT else CoreType.BUKKIT
             hasServerClass -> CoreType.VANILLA
@@ -89,8 +103,8 @@ object CoreDetector {
             else -> CoreType.OTHER
         }
 
-        val version = extractVersion(versionJson, implVersion, specVersion, pomVersion, file.name)
-        return CoreInfo(type, version, isClient, mainClass, file.length())
+        val version = extractVersion(versionJson, implVersion, specVersion, pomVersion, classPathLine, file.name)
+        return CoreInfo(type, version, isClient, mainClass, file.length(), validJar = true, classPath = classPathEntries)
     }
 
     private fun readEntry(zip: ZipFile, name: String, max: Int): String {
@@ -117,6 +131,7 @@ object CoreDetector {
         implVersion: String?,
         specVersion: String?,
         pomVersion: String,
+        classPath: String,
         fileName: String
     ): String? {
         if (versionJson.isNotBlank()) {
@@ -136,6 +151,10 @@ object CoreDetector {
             versionRegex.findAll(pomVersion).forEach { m ->
                 if (mcVersionRegex.matches(m.value)) return m.value
             }
+        }
+        // KCauldron style: bin/pw/prok/KCauldron/1.7.10-1614.201/KCauldron-1.7.10-1614.201.jar
+        versionRegex.findAll(classPath).forEach { m ->
+            if (mcVersionRegex.matches(m.value)) return m.value
         }
         versionRegex.findAll(fileName).forEach { m ->
             if (mcVersionRegex.matches(m.value)) return m.value

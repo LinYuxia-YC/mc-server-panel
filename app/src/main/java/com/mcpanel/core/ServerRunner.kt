@@ -18,6 +18,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.io.BufferedWriter
 import java.io.File
 import java.io.OutputStreamWriter
+import java.io.RandomAccessFile
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -43,6 +44,9 @@ object ServerRunner {
     private var appContext: Context? = null
     private var watchJob: Job? = null
     private var readerJob: Job? = null
+    private var tailJob: Job? = null
+    @Volatile
+    private var stdoutSeen = false
 
     private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
 
@@ -83,6 +87,17 @@ object ServerRunner {
                 Proot.nativeServerCommand(profile, runtime)
             }
             val env = if (runtime.kind == JavaRuntime.KIND_PROOT) Proot.env() else Proot.nativeEnv(runtime)
+            // KCauldron/Thermos append to logs/latest.log instead of writing to stdout.
+            // Rotate the previous log so the tailer only sees this session's output.
+            try {
+                val latest = File(dir, "logs/latest.log")
+                if (latest.exists() && latest.length() > 0) {
+                    val previous = File(dir, "logs/latest.log.prev")
+                    previous.delete()
+                    latest.renameTo(previous)
+                }
+            } catch (_: Throwable) {
+            }
             val pb = ProcessBuilder(command)
             pb.directory(dir)
             pb.redirectErrorStream(true)
@@ -109,6 +124,17 @@ object ServerRunner {
 
             readerJob = scope.launch { readLoop(proc) }
             watchJob = scope.launch { watchLoop(proc, profile) }
+            // KCauldron / Forge 1.7.10 redirect stdout into logs/latest.log; if nothing
+            // arrives on stdout, mirror the log file into the in-app console instead.
+            stdoutSeen = false
+            tailJob?.cancel()
+            tailJob = scope.launch {
+                delay(8000)
+                if (!stdoutSeen && proc.isAlive) {
+                    appendSystem("服务端将日志写入 logs/latest.log，已自动同步到控制台")
+                    tailLatestLog(profile)
+                }
+            }
             Result.success(Unit)
         } catch (e: Throwable) {
             _state.value = RunState(
@@ -125,15 +151,71 @@ object ServerRunner {
         try {
             proc.inputStream.bufferedReader(Charsets.UTF_8).useLines { lines ->
                 lines.forEach { raw ->
-                    val line = raw.replace(Regex("\u001B\\[[;\\d]*[A-Za-z]"), "")
-                    appendLog(line)
-                    if (line.contains("Done (")) {
-                        _state.value = _state.value.copy(status = RunStatus.RUNNING)
-                        scheduleAutoCommands()
+                    if (!stdoutSeen) {
+                        stdoutSeen = true
+                        tailJob?.cancel()
                     }
+                    val line = raw.replace(Regex("\u001B\\[[;\\d]*[A-Za-z]"), "")
+                    handleLine(line)
                 }
             }
         } catch (_: Throwable) {
+        }
+    }
+
+    private fun handleLine(line: String) {
+        appendLog(line)
+        if (line.contains("Done (")) {
+            if (_state.value.status != RunStatus.RUNNING) {
+                _state.value = _state.value.copy(status = RunStatus.RUNNING)
+                scheduleAutoCommands()
+            }
+        }
+    }
+
+    /**
+     * Follows logs/latest.log and pushes new lines to the console. Used by servers that
+     * replace System.out with a log file appender (KCauldron, Thermos, Forge 1.7.10...).
+     */
+    private suspend fun tailLatestLog(profile: ServerProfile) {
+        val file = File(profile.dirFile, "logs/latest.log")
+        val waitUntil = System.currentTimeMillis() + 30_000
+        while (!file.exists() && System.currentTimeMillis() < waitUntil) {
+            if (process?.isAlive != true) return
+            delay(500)
+        }
+        if (!file.exists()) return
+        var position = 0L
+        val pending = StringBuilder()
+        while (process?.isAlive == true) {
+            if (stdoutSeen) return
+            try {
+                val length = file.length()
+                if (length > position) {
+                    RandomAccessFile(file, "r").use { raf ->
+                        raf.seek(position)
+                        val toRead = (length - position).coerceAtMost(512L * 1024L).toInt()
+                        if (toRead > 0) {
+                            val bytes = ByteArray(toRead)
+                            val read = raf.read(bytes)
+                            if (read > 0) {
+                                position += read
+                                pending.append(String(bytes, 0, read, Charsets.UTF_8))
+                                var newline = pending.indexOf("\n")
+                                while (newline >= 0) {
+                                    val line = pending.substring(0, newline).trimEnd('\r')
+                                    pending.delete(0, newline + 1)
+                                    if (line.isNotEmpty()) handleLine(line)
+                                    newline = pending.indexOf("\n")
+                                }
+                                if (pending.length > 16_384) pending.setLength(0)
+                            }
+                        }
+                    }
+                }
+            } catch (_: Throwable) {
+            }
+            delay(400)
         }
     }
 
@@ -143,7 +225,11 @@ object ServerRunner {
             delay(2000)
             if (procAlive()) {
                 if (profile.randomTickSpeed >= 0) {
-                    sendCommandInternal("gamerule randomTickSpeed ${profile.randomTickSpeed}")
+                    if (McVersions.supportsRandomTickSpeed(profile.mcVersion)) {
+                        sendCommandInternal("gamerule randomTickSpeed ${profile.randomTickSpeed}")
+                    } else {
+                        appendSystem("Minecraft ${profile.mcVersion} 不支持 randomTickSpeed，已跳过随机刻设置")
+                    }
                 }
                 if (profile.onlineMode) {
                     appendSystem("已开启正版验证（online-mode=true）")
@@ -158,6 +244,8 @@ object ServerRunner {
         } catch (_: Throwable) {
             -1
         }
+        tailJob?.cancel()
+        tailJob = null
         val wasStopping = stopRequested
         val status = if (wasStopping) RunStatus.STOPPED else if (exit != 0) RunStatus.CRASHED else RunStatus.STOPPED
         val message = when {
