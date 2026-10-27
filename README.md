@@ -12,7 +12,7 @@
 
 > 已在 OPPO PFVM10（Android 12，arm64）真机验证：
 > 原版 1.12.2 + Java 8（Temurin 8u504）与 原版 1.20.1 + Java 17（Temurin 17.0.20.1）均可正常启动、监听端口、在控制台收发指令。
-> 直接安装包：`方块开服-v1.0.0-arm64.apk`（约 5.9 MB）。
+> 直接安装包：[mcpanel-v1.0.0-arm64.apk](https://github.com/LinYuxia-YC/mc-server-panel/releases/download/v1.0.0/mcpanel-v1.0.0-arm64.apk)（约 5.9 MB，见 [Releases](https://github.com/LinYuxia-YC/mc-server-panel/releases)）。
 
 ## 界面预览
 
