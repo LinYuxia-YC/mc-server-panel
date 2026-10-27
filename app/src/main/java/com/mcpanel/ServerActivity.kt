@@ -119,7 +119,10 @@ class ServerActivity : AppCompatActivity() {
 
     private fun updateStaticInfo() {
         val runtime = Prefs.runtime(profile.javaId)
-        val typeLabel = profile.coreType.replace("原版 Vanilla", "原版").ifBlank { "未知核心" }
+        val typeLabel = profile.coreType
+            .replace("原版 Vanilla", "原版")
+            .replace("Cauldron/Thermos", "Cauldron")
+            .ifBlank { "未知核心" }
         val lanIp = IntentUtils.wifiIp()
         serverMeta.text = buildString {
             append(McVersions.pretty(profile.mcVersion))

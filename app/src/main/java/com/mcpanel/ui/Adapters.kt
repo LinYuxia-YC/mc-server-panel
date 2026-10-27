@@ -48,6 +48,7 @@ class ServerAdapter(
         holder.name.text = profile.displayTitle
         val typeLabel = profile.coreType
             .replace("原版 Vanilla", "原版")
+            .replace("Cauldron/Thermos", "Cauldron")
             .ifBlank { "未识别核心" }
         val subtitle = buildString {
             append(if (profile.mcVersion.isBlank()) "版本未设置" else profile.mcVersion)
