@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="世界管理"
+        android:textColor="@color/text"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/worldInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:lineSpacingExtra="3dp"
+        android:textColor="@color/text_dim"
+        android:textSize="12sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnExportWorld"
+        style="@style/Widget.McPanel.Button.Tonal"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="16dp"
+        android:gravity="start|center_vertical"
+        android:paddingHorizontal="16dp"
+        android:text="导出世界到指定目录"
+        app:icon="@drawable/ic_archive"
+        app:iconGravity="textStart" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnResetWorld"
+        style="@style/Widget.McPanel.Button.Outlined"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="8dp"
+        android:gravity="start|center_vertical"
+        android:paddingHorizontal="16dp"
+        android:text="重置世界（删除当前存档）"
+        android:textColor="@color/danger"
+        app:icon="@drawable/ic_reset"
+        app:iconGravity="textStart"
+        app:iconTint="@color/danger" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnOpenWorldDir"
+        style="@style/Widget.McPanel.Button.Outlined"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="8dp"
+        android:gravity="start|center_vertical"
+        android:paddingHorizontal="16dp"
+        android:text="在 MT 管理器中打开世界目录"
+        app:icon="@drawable/ic_folder"
+        app:iconGravity="textStart"
+        app:iconTint="@color/primary" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnClose"
+        style="@style/Widget.McPanel.Button.Outlined"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:text="关闭"
+        android:textColor="@color/text" />
+</LinearLayout>

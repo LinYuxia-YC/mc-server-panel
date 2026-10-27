@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Minecraft 用户协议 (EULA)"
+        android:textColor="@color/text"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/eulaStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:lineSpacingExtra="3dp"
+        android:textColor="@color/text_dim"
+        android:textSize="12sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAcceptEula"
+        style="@style/Widget.McPanel.Button"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="16dp"
+        android:text="同意 EULA 并关闭" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnOpenEula"
+        style="@style/Widget.McPanel.Button.Outlined"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="8dp"
+        android:text="打开 / 编辑 eula.txt"
+        app:icon="@drawable/ic_description"
+        app:iconGravity="textStart"
+        app:iconTint="@color/primary" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnOpenEulaWeb"
+        style="@style/Widget.McPanel.Button.Outlined"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="8dp"
+        android:text="查看官方协议原文"
+        app:icon="@drawable/ic_open_in_new"
+        app:iconGravity="textStart"
+        app:iconTint="@color/text_dim" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnEulaClose"
+        style="@style/Widget.McPanel.Button.Outlined"
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:layout_marginTop="10dp"
+        android:text="关闭"
+        android:textColor="@color/text" />
+</LinearLayout>

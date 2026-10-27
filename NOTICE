@@ -1,0 +1,40 @@
+方块开服 · Minecraft 服务器一键面板（McPanel）
+Copyright (C) 2026 YuXiaYC
+
+本项目以 GNU Affero 通用公共许可证第 3 版（AGPL-3.0）授权发布。
+完整许可证文本见仓库根目录的 LICENSE 文件，或访问：
+https://www.gnu.org/licenses/agpl-3.0.html
+
+Author / 作者：YuXiaYC
+Development assistance / 开发协助：DeepSeek Harness
+
+--------------------------------------------------------------------
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+--------------------------------------------------------------------
+
+第三方组件 / Third-party components
+- AndroidX, Material Components, Kotlin Coroutines, Gson,
+  Apache Commons Compress: Apache License 2.0
+- XZ for Java: Public Domain
+- proot: GNU General Public License v2
+- libtalloc: GNU Lesser General Public License v3
+- libandroid-shmem: Apache License 2.0
+- Ubuntu Base rootfs, Eclipse Temurin (OpenJDK): downloaded at runtime
+  by the user, subject to their respective licenses.
+
+Minecraft is a trademark of Mojang Synergies AB / Microsoft.
+This project is not affiliated with Mojang or Microsoft and does not
+ship any Minecraft game files or server software.

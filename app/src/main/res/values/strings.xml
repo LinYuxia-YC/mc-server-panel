@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">方块开服</string>
+    <string name="app_subtitle">Minecraft 服务器一键面板</string>
+
+    <string name="nav_servers">服务器</string>
+    <string name="empty_title">还没有服务器</string>
+    <string name="empty_desc">导入一个服务端核心（.jar），\n选择版本与 Java，一键开服。</string>
+    <string name="add_server">添加服务器</string>
+
+    <string name="start">启动</string>
+    <string name="stop">停止</string>
+    <string name="running">运行中</string>
+    <string name="stopped">未启动</string>
+    <string name="starting">启动中…</string>
+    <string name="stopping">正在停止…</string>
+    <string name="crashed">已退出</string>
+    <string name="console">控制台</string>
+    <string name="settings">设置</string>
+    <string name="save">保存</string>
+    <string name="cancel">取消</string>
+    <string name="confirm">确定</string>
+    <string name="delete">删除</string>
+    <string name="back">返回</string>
+    <string name="done">完成</string>
+    <string name="retry">重试</string>
+    <string name="close">关闭</string>
+</resources>

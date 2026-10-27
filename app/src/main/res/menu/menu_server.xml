@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_rename"
+        android:title="重命名服务器"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_change_java"
+        android:title="更换 Java 环境"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_reimport_core"
+        android:title="重新导入服务端核心"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_delete"
+        android:title="删除服务器"
+        app:showAsAction="never" />
+</menu>

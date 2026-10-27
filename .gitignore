@@ -1,0 +1,25 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build
+/app/build
+/captures
+.externalNativeBuild
+.cxx
+*.log
+
+# signing material must never be committed
+/app/release.jks
+keystore.properties
+*.jks
+*.keystore
+
+# build outputs / user supplied reference source
+*.apk
+*.aab
+/termux-app-0.118.3/
+
+# downloaded toolchains / runtimes
+/tools/
